@@ -13,6 +13,7 @@
         <div class="nav-brand">BGMI <span class="accent">CHAMPIONSHIP</span></div>
         <ul class="nav-links">
             <li><a href="#hero">Home</a></li>
+            <li><a href="#scoring">Scoring</a></li>
             <li><a href="#schedule">Schedule</a></li>
             <li><a href="#match-leaderboard">Match Stats</a></li>
             <li><a href="#overall-leaderboard">Ranking</a></li>
@@ -125,6 +126,16 @@
                         <button type="submit" class="btn primary-btn">Update Group</button>
                     </form>
                 </div>
+                <div class="admin-card">
+                    <h3>Tournament Status</h3>
+                    <p class="admin-tip">Manage suspense and reveal winners sequentially.</p>
+                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                        <button id="btn-toggle-overall" class="btn secondary-btn">Hide Overall Leaderboard</button>
+                        <button id="btn-reveal-runnerup" class="btn primary-btn">Reveal Runner Up</button>
+                        <button id="btn-reveal-champion" class="btn primary-btn">Reveal Champions</button>
+                        <button id="btn-reset-reveal" class="btn secondary-btn">Reset / Hide All Reveals</button>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -161,6 +172,81 @@
             </div>
         </header>
 
+        <!-- Champions Section (Hidden by Default) -->
+        <section id="champions" class="section hidden" style="position: relative; overflow: hidden; text-align: center; background: url('logo.png') center/cover no-repeat; background-blend-mode: overlay; background-color: rgba(10,10,12,0.95);">
+            <div id="confetti-container" style="position: absolute; inset: 0; pointer-events: none; z-index: 0;"></div>
+            <div class="container" style="position: relative; z-index: 10;">
+                <h2 class="glitch-title" style="font-size: clamp(2.5rem, 5vw, 4rem); margin-bottom: 0.5rem; color: var(--gold); text-shadow: 0 0 20px rgba(255,215,0,0.5);">THE BGMI CHAMPIONS</h2>
+                <h3 class="section-title" style="font-size: 2rem; margin-bottom: 3rem;">OF PRAGYOTSAV 2K26</h3>
+                
+                <div id="winners-grid" style="display:flex; flex-direction:column; gap:2rem; align-items:center;">
+                    <!-- Champion -->
+                    <div id="card-champion" class="champion-card hidden" style="width:100%; background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.02)); border: 2px solid var(--gold); padding: 3rem 1rem; border-radius: 12px; max-width: 700px; box-shadow: 0 0 40px rgba(255,215,0,0.2); backdrop-filter: blur(5px); order: 1;">
+                    </div>
+
+                    <!-- Runner Up -->
+                    <div id="card-runnerup" class="champion-card hidden" style="width:100%; background: linear-gradient(135deg, rgba(192,192,192,0.15), rgba(192,192,192,0.02)); border: 2px solid var(--silver); padding: 2rem 1rem; border-radius: 12px; max-width: 600px; box-shadow: 0 0 30px rgba(192,192,192,0.2); backdrop-filter: blur(5px); order: 2;">
+                    </div>
+                </div>
+
+                <div class="thank-you-message" style="margin-top: 4rem; background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 2rem; border-radius: 8px;">
+                    <p style="font-size: 1.8rem; color: var(--accent-primary); font-weight: 700; font-family: var(--font-heading); text-transform: uppercase;">A Massive Thank You To All Participants!</p>
+                    <p style="font-size: 1.2rem; color: var(--text-muted); margin-top: 0.5rem;">For competing with relentless passion, skill, and sportsmanship. The battlefield will await your return in the next edition.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scoring System -->
+        <section id="scoring" class="section dark-alt">
+            <div class="container">
+                <div class="section-header-row">
+                    <h2 class="section-title">Scoring <span class="accent">System</span></h2>
+                </div>
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <p class="tagline" style="color:var(--accent-secondary); letter-spacing: 2px;">BGIS FORMAT SCORING SYSTEM</p>
+                </div>
+                <div id="scoring-export-area" class="export-area">
+                    <div class="export-watermark"><img src="logo.png" alt="Watermark"></div>
+                    <div class="export-header">
+                        <h2>BGMI <span class="accent">CHAMPIONSHIP</span></h2>
+                        <p id="scoring-export-title">Scoring System</p>
+                    </div>
+                    
+                    <div class="table-container" style="max-width: 600px; margin: 0 auto;">
+                        <table class="esports-table" style="text-align: center;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: center;">Placement</th>
+                                    <th style="text-align: center;">Points</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="rank-1">1</td><td style="color:var(--accent-primary); font-weight:bold;">10</td></tr>
+                                <tr><td class="rank-2">2</td><td style="color:var(--accent-primary); font-weight:bold;">6</td></tr>
+                                <tr><td class="rank-3">3</td><td style="color:var(--accent-primary); font-weight:bold;">5</td></tr>
+                                <tr><td>4</td><td style="color:var(--accent-primary); font-weight:bold;">4</td></tr>
+                                <tr><td>5</td><td style="color:var(--accent-primary); font-weight:bold;">3</td></tr>
+                                <tr><td>6</td><td style="color:var(--accent-primary); font-weight:bold;">2</td></tr>
+                                <tr><td>7-8</td><td style="color:var(--accent-primary); font-weight:bold;">1</td></tr>
+                                <tr><td>9-16</td><td style="color:var(--accent-primary); font-weight:bold;">0</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 1.5rem; margin-bottom: 1rem;">
+                        <p style="font-size: 1.2rem; color: var(--text-main); font-family: var(--font-body); letter-spacing: 1px; text-transform: uppercase;">Every finish is worth 1 point.</p>
+                    </div>
+
+                    <div class="export-footer">
+                        <p>Pragyotsav 2K26</p>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button id="dl-scoring-btn" class="btn secondary-btn" style="padding: 0.75rem 2rem; font-size: 1.1rem; border: 1px solid var(--accent-secondary); box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);">⬇ Download Scoring System</button>
+                </div>
+            </div>
+        </section>
+
         <!-- Match Schedule -->
         <section id="schedule" class="section">
             <div class="container">
@@ -189,10 +275,16 @@
                     <h2 class="section-title">Match <span class="accent">Results</span></h2>
                     <div class="filter-controls">
                         <label for="match-select">Select Match: </label>
-                        <select id="match-select" class="form-input">
+                        <select id="match-select" class="form-input" style="margin-right: 1rem;">
                             <option value="1">Match 1</option>
                         </select>
-                        <button id="dl-match-btn" class="btn secondary-btn" style="padding: 0.5rem 1rem; margin-left: 1rem;">⬇ Download</button>
+                        <label for="match-group-filter">Filter: </label>
+                        <select id="match-group-filter" class="form-input">
+                            <option value="All">All Teams</option>
+                            <option value="Group A">Group A</option>
+                            <option value="Group B">Group B</option>
+                            <option value="Finals">Finals</option>
+                        </select>
                     </div>
                 </div>
                 <div id="match-export-area" class="export-area">
@@ -220,6 +312,9 @@
                         <p>Credits: Pragyotsav 2K26</p>
                     </div>
                 </div>
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button id="dl-match-btn" class="btn secondary-btn" style="padding: 0.75rem 2rem; font-size: 1.1rem; border: 1px solid var(--accent-secondary); box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);">⬇ Download Match Stats</button>
+                </div>
             </div>
         </section>
 
@@ -229,14 +324,20 @@
                 <div class="section-header-row">
                     <h2 class="section-title">Overall <span class="accent">Leaderboard</span></h2>
                     <div class="filter-controls">
-                        <button id="dl-overall-btn" class="btn secondary-btn" style="padding: 0.5rem 1rem;">⬇ Download</button>
+                        <label for="overall-group-filter">Filter: </label>
+                        <select id="overall-group-filter" class="form-input">
+                            <option value="All">All Teams</option>
+                            <option value="Group A">Group A</option>
+                            <option value="Group B">Group B</option>
+                            <option value="Finals">Finals</option>
+                        </select>
                     </div>
                 </div>
                 <div id="overall-export-area" class="export-area">
                     <div class="export-watermark"><img src="logo.png" alt="Watermark"></div>
                     <div class="export-header">
                         <h2>BGMI <span class="accent">CHAMPIONSHIP</span></h2>
-                        <p>Overall Ranking</p>
+                        <p id="overall-export-title">Overall Ranking</p>
                     </div>
                     <div class="table-container">
                         <table class="esports-table" id="overall-table">
@@ -258,6 +359,9 @@
                         <p>Pragyotsav 2K26</p>
                     </div>
                 </div>
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button id="dl-overall-btn" class="btn secondary-btn" style="padding: 0.75rem 2rem; font-size: 1.1rem; border: 1px solid var(--accent-secondary); box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);">⬇ Download Overall Ranking</button>
+                </div>
             </div>
         </section>
 
@@ -274,7 +378,6 @@
                                 <option value="Group B">Group B</option>
                                 <option value="Finals">Finals</option>
                             </select>
-                            <button id="dl-team-btn" class="btn secondary-btn" style="padding: 0.5rem 1rem; margin-left: 1rem;">⬇ Download</button>
                         </div>
                         <input type="text" id="team-search" class="form-input" placeholder="Search team by name..." style="width: 100%; min-width: 250px; text-align: center;">
                     </div>
@@ -309,6 +412,9 @@
                     <div class="export-footer">
                         <p>Pragyotsav 2K26</p>
                     </div>
+                </div>
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button id="dl-team-btn" class="btn secondary-btn" style="padding: 0.75rem 2rem; font-size: 1.1rem; border: 1px solid var(--accent-secondary); box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);">⬇ Download Team List</button>
                 </div>
             </div>
         </section>
