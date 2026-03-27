@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BGMI CHAMPIONSHIP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,400&family=Teko:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-brand">BGMI <span class="accent">CHAMPIONSHIP</span></div>
+        <ul class="nav-links">
+            <li><a href="#hero">Home</a></li>
+            <li><a href="#schedule">Schedule</a></li>
+            <li><a href="#match-leaderboard">Match Stats</a></li>
+            <li><a href="#overall-leaderboard">Ranking</a></li>
+            <li><a href="#teams">Teams</a></li>
+            <li><a href="#maps">Maps</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li><button id="theme-toggle" class="btn icon-btn" title="Toggle Light/Dark Mode">☀️</button></li>
+            <li><a href="#" id="admin-login-btn" class="btn shiny-btn" style="padding: 0.5rem 1rem;">Admin</a></li>
+        </ul>
+        <div class="hamburger">
+            <span></span><span></span><span></span>
+        </div>
+    </nav>
+
+    <!-- Admin Login Modal -->
+    <div id="admin-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" id="close-modal">&times;</span>
+            <h2>Admin Login</h2>
+            <form id="login-form">
+                <input type="email" id="admin-email" placeholder="Email" required autocomplete="email">
+                <input type="password" id="admin-password" placeholder="Password" required>
+                <div id="login-error" class="error-msg hidden"></div>
+                <button type="submit" class="btn primary-btn">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Panel (Hidden by default) -->
+    <section id="admin-panel" class="section hidden">
+        <div class="container">
+            <h2 class="section-title">Admin <span class="accent">Dashboard</span></h2>
+            <button id="logout-btn" class="btn secondary-btn" style="margin-bottom: 2rem;">Logout</button>
+            <div class="admin-grid">
+                <div class="admin-card">
+                    <h3>Add / Update Schedule</h3>
+                    <p class="admin-tip">Note: If Match No. already exists, it will UPDATE the match instead of creating a new one.</p>
+                    <form id="form-schedule">
+                        <input type="number" id="sch-match-no" placeholder="Match No." required min="1">
+                        <input type="datetime-local" id="sch-datetime" required>
+                        <input type="text" id="sch-teams" placeholder="Teams Playing (e.g., All Teams)" required>
+                        <select id="sch-map" required>
+                            <option value="Erangel">Erangel</option>
+                            <option value="Miramar">Miramar</option>
+                            <option value="Rondo">Rondo</option>
+                        </select>
+                        <select id="sch-status" required>
+                            <option value="Upcoming">Upcoming</option>
+                            <option value="Live">Live</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                        <button type="submit" class="btn primary-btn">Save Match Schedule</button>
+                    </form>
+                </div>
+                <div class="admin-card">
+                    <h3>Add Match Result</h3>
+                    <form id="form-match-result">
+                        <select class="match-select-admin form-input" id="res-match-no" required>
+                            <option value="1">Match 1</option>
+                        </select>
+                        <select class="team-select-admin form-input" id="res-team-id" required></select>
+                        <input type="number" id="res-kills" placeholder="Kills" required min="0">
+                        <input type="number" id="res-placement-points" placeholder="Placement Points" required min="0">
+                        <select id="res-chicken" class="form-input" required>
+                            <option value="0">0x Chicken Dinner</option>
+                            <option value="1">1x Chicken Dinner</option>
+                            <option value="2">2x Chicken Dinner</option>
+                            <option value="3">3x Chicken Dinner</option>
+                            <option value="4">4x Chicken Dinner</option>
+                            <option value="5">5x Chicken Dinner</option>
+                            <option value="6">6x Chicken Dinner</option>
+                            <option value="7">7x Chicken Dinner</option>
+                            <option value="8">8x Chicken Dinner</option>
+                            <option value="9">9x Chicken Dinner</option>
+                            <option value="10">10x Chicken Dinner</option>
+                        </select>
+                        <button type="submit" class="btn primary-btn">Add Team Result</button>
+                    </form>
+                </div>
+                <div class="admin-card">
+                    <h3>Add Team</h3>
+                    <form id="form-team">
+                        <input type="text" id="team-name" placeholder="Team Name" required>
+                        <select id="team-group" class="form-input" required>
+                            <option value="Group A">Group A</option>
+                            <option value="Group B">Group B</option>
+                            <option value="Finals">Finals</option>
+                        </select>
+                        <input type="text" id="team-logo" placeholder="Logo URL (optional)">
+                        <input type="text" id="p1-name" placeholder="Player 1 Name" required>
+                        <input type="text" id="p1-ign" placeholder="Player 1 IGN" required>
+                        <input type="text" id="p2-name" placeholder="Player 2 Name" required>
+                        <input type="text" id="p2-ign" placeholder="Player 2 IGN" required>
+                        <input type="text" id="p3-name" placeholder="Player 3 Name" required>
+                        <input type="text" id="p3-ign" placeholder="Player 3 IGN" required>
+                        <input type="text" id="p4-name" placeholder="Player 4 Name" required>
+                        <input type="text" id="p4-ign" placeholder="Player 4 IGN" required>
+                        <button type="submit" class="btn primary-btn">Save Team</button>
+                    </form>
+                </div>
+                <div class="admin-card">
+                    <h3>Update Team Group</h3>
+                    <form id="form-update-group">
+                        <select class="team-select-admin form-input" id="upd-team-id" required></select>
+                        <select id="upd-team-group" class="form-input" required>
+                            <option value="Group A">Group A</option>
+                            <option value="Group B">Group B</option>
+                            <option value="Finals">Finals</option>
+                        </select>
+                        <button type="submit" class="btn primary-btn">Update Group</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main>
+        <!-- Hero Section - Everything fits in one viewport -->
+        <header id="hero" class="hero-section">
+            <div class="hero-bg-container">
+                <img src="Background.png" id="hero-custom-bg" alt="">
+            </div>
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <!-- Top badge row -->
+                <div class="hero-badge">
+                    <span class="techfest-label">Pragyotsav 2K26</span>
+                    <span class="hero-sep">✦</span>
+                    <span class="hero-date-label">APRIL 7 – 8</span>
+                </div>
+
+                <!-- BIG LOGO -->
+                <div class="hero-logo-wrap">
+                    <img src="logo.png" id="hero-logo" alt="BGMI Championship Logo">
+                </div>
+
+                <!-- Main title -->
+                <h1 class="glitch-title" data-text="BGMI CHAMPIONSHIP">BGMI CHAMPIONSHIP</h1>
+                <p class="tagline">Survive. Dominate. Champion.</p>
+                <a href="#overall-leaderboard" class="btn primary-btn large-btn">View Leaderboard</a>
+
+                <!-- Scroll hint -->
+                <div class="scroll-indicator">
+                    <div class="scroll-arrow"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Match Schedule -->
+        <section id="schedule" class="section">
+            <div class="container">
+                <h2 class="section-title">Tournament <span class="accent">Schedule</span></h2>
+                <div class="table-container">
+                    <table class="esports-table" id="schedule-table">
+                        <thead>
+                            <tr>
+                                <th>Match No.</th>
+                                <th>Date & Time</th>
+                                <th>Teams Playing</th>
+                                <th>Map</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Match Leaderboard -->
+        <section id="match-leaderboard" class="section dark-alt">
+            <div class="container">
+                <div class="section-header-row">
+                    <h2 class="section-title">Match <span class="accent">Results</span></h2>
+                    <div class="filter-controls">
+                        <label for="match-select">Select Match: </label>
+                        <select id="match-select" class="form-input">
+                            <option value="1">Match 1</option>
+                        </select>
+                        <button id="dl-match-btn" class="btn secondary-btn" style="padding: 0.5rem 1rem; margin-left: 1rem;">⬇ Download</button>
+                    </div>
+                </div>
+                <div id="match-export-area" class="export-area">
+                    <div class="export-watermark"><img src="logo.png" alt="Watermark"></div>
+                    <div class="export-header">
+                        <h2>BGMI <span class="accent">CHAMPIONSHIP</span></h2>
+                        <p id="match-export-title">Match Result</p>
+                    </div>
+                    <div class="table-container">
+                        <table class="esports-table" id="match-leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Team Name</th>
+                                    <th>Chicken Dinner</th>
+                                    <th>Kills</th>
+                                    <th>Placement Pts</th>
+                                    <th>Total Pts</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="export-footer">
+                        <p>Credits: Pragyotsav 2K26</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Overall Leaderboard -->
+        <section id="overall-leaderboard" class="section">
+            <div class="container">
+                <div class="section-header-row">
+                    <h2 class="section-title">Overall <span class="accent">Leaderboard</span></h2>
+                    <div class="filter-controls">
+                        <button id="dl-overall-btn" class="btn secondary-btn" style="padding: 0.5rem 1rem;">⬇ Download</button>
+                    </div>
+                </div>
+                <div id="overall-export-area" class="export-area">
+                    <div class="export-watermark"><img src="logo.png" alt="Watermark"></div>
+                    <div class="export-header">
+                        <h2>BGMI <span class="accent">CHAMPIONSHIP</span></h2>
+                        <p>Overall Ranking</p>
+                    </div>
+                    <div class="table-container">
+                        <table class="esports-table" id="overall-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Team Name</th>
+                                    <th>Matches</th>
+                                    <th>Chicken Dinners</th>
+                                    <th>Total Kills</th>
+                                    <th>Total Placement</th>
+                                    <th>Grand Total</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="export-footer">
+                        <p>Pragyotsav 2K26</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Team Profiles -->
+        <section id="teams" class="section dark-alt">
+            <div class="container">
+                <div class="section-header-row">
+                    <h2 class="section-title">Participating <span class="accent">Teams</span></h2>
+                    <div style="display: flex; flex-direction: column; gap: 1rem; align-items: center; margin-bottom: 1.5rem;">
+                        <div class="filter-controls" style="margin-bottom: 0;">
+                            <select id="team-group-filter" class="form-input">
+                                <option value="All">All Teams</option>
+                                <option value="Group A">Group A</option>
+                                <option value="Group B">Group B</option>
+                                <option value="Finals">Finals</option>
+                            </select>
+                            <button id="dl-team-btn" class="btn secondary-btn" style="padding: 0.5rem 1rem; margin-left: 1rem;">⬇ Download</button>
+                        </div>
+                        <input type="text" id="team-search" class="form-input" placeholder="Search team by name..." style="width: 100%; min-width: 250px; text-align: center;">
+                    </div>
+                </div>
+                
+                <div id="teams-export-area" class="export-area">
+                    <div class="export-watermark"><img src="logo.png" alt="Watermark"></div>
+                    <div class="export-header">
+                        <h2>BGMI <span class="accent">CHAMPIONSHIP</span></h2>
+                        <p id="teams-export-title">Participating Teams</p>
+                    </div>
+                    
+                    <div id="finals-message" class="hidden" style="text-align:center; color:var(--accent-primary); font-size:1.5rem; margin-bottom:1.5rem; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">
+                        🔥 THESE ELITE TEAMS HAVE ADVANCED TO THE FINALS! 🔥
+                    </div>
+
+                    <div class="table-container">
+                        <table class="esports-table" id="teams-table">
+                            <thead>
+                                <tr>
+                                    <th>S.No</th>
+                                    <th>Team Name</th>
+                                    <th>Group</th>
+                                    <th>P1 / P2</th>
+                                    <th>P3 / P4</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="export-footer">
+                        <p>Pragyotsav 2K26</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Maps & Zones -->
+        <section id="maps" class="section">
+            <div class="container">
+                <h2 class="section-title">Tournament <span class="accent">Maps</span></h2>
+                <div class="maps-grid">
+                    <div class="map-card">
+                        <img src="erangel.png" class="map-img-placeholder" alt="Erangel Map Image">
+                        <div class="map-info">
+                            <h3>Erangel</h3>
+                            <p>The iconic 8x8 km island with varied terrain, dense forests, and urban combat zones.</p>
+                        </div>
+                    </div>
+                    <div class="map-card">
+                        <img src="miramar.png" class="map-img-placeholder" alt="Miramar Map Image">
+                        <div class="map-info">
+                            <h3>Miramar</h3>
+                            <p>A vast, unforgiving desert map favoring long-range engagements and strategic positioning.</p>
+                        </div>
+                    </div>
+                    <div class="map-card">
+                        <img src="Rondo.jpg" class="map-img-placeholder" alt="Rondo Map Image">
+                        <div class="map-info">
+                            <h3>Rondo</h3>
+                            <p>A sprawling map with diverse landscapes, traditional architecture, and modern cityscapes.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="section dark-alt">
+            <div class="container">
+                <h2 class="section-title"><span class="accent">Contact</span> Us</h2>
+                <div class="contact-grid">
+                    <div class="contact-card">
+                        <h3>Official Email</h3>
+                        <p class="contact-highlight"><a href="mailto:">pragyotsav26@gmail.com</a></p>
+                    </div>
+                    <div class="contact-card">
+                        <h3>Faculty Co-ordinator</h3>
+                        <p><strong>Mr. PURUSHOTTAM CHAWKE</strong></p>
+                        <p class="contact-highlight">+91 9850456066</p>
+                    </div>
+                    <div class="contact-card">
+                        <h3>Student Co-ordinators</h3>
+                        <p><strong>VEDANT KHORGADE</strong><br><span class="contact-highlight">+91 9529596669</span></p>
+                        <hr class="contact-divider">
+                        <p><strong>SAHIL SADAWARTI</strong><br><span class="contact-highlight">+91 8805639885</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">BGMI <span class="accent">CHAMPIONSHIP</span></div>
+                <p>&copy; 2026 Pragyotsav. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script type="module" src="script.js"></script>
+</body>
+</html>
