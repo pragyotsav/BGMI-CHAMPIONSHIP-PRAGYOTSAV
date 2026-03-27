@@ -697,6 +697,25 @@ footer {
     .contact-grid { grid-template-columns: 1fr; }
 }
 
+/* --- Confetti Animation & Pulse --- */
+.confetti-piece {
+    position: absolute;
+    width: 8px;
+    height: 15px;
+    top: -20px;
+    opacity: 0;
+    animation: confettiFall 4s ease-in-out infinite;
+    border-radius: 2px;
+}
+@keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+@keyframes pulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(255,215,0,0.5)); }
+    50% { transform: scale(1.1); filter: drop-shadow(0 0 30px rgba(255,215,0,0.8)); }
+}
+
 /* Very small screens */
 @media (max-width: 400px) {
     #hero-logo { width: min(900px, 100vw); }
@@ -766,6 +785,8 @@ footer {
     padding: 2.5rem;
     background-color: var(--bg-main) !important; 
     border: 2px solid var(--accent-primary);
+    width: max-content !important;
+    min-width: 100%;
 }
 .export-area.is-downloading .export-watermark {
     display: flex;
