@@ -101,16 +101,27 @@ window.addEventListener("click", (e) => {
 let state = {
     teams: [],
     schedule: [],
-    results: []
+    results: [],
+    settings: { hideOverall: false, revealStatus: 0 }
 };
 // Listeners
 if(db) {
+    onSnapshot(doc(db, "settings", "tournament"), (docSnap) => {
+        if(docSnap.exists()) {
+            let data = docSnap.data();
+            state.settings.hideOverall = data.hideOverall || false;
+            state.settings.revealStatus = data.revealStatus || 0;
+            renderOverallLeaderboard();
+            renderChampionsReveal();
+        }
+    });
     onSnapshot(collection(db, "teams"), (snapshot) => {
         state.teams = [];
         snapshot.forEach(doc => state.teams.push({ id: doc.id, ...doc.data() }));
         renderTeams();
         updateAdminSelectors();
         renderOverallLeaderboard();
+        renderChampionsReveal();
     });
     const qSchedule = query(collection(db, "schedule"), orderBy("matchNo", "asc"));
     onSnapshot(qSchedule, (snapshot) => {
@@ -124,6 +135,7 @@ if(db) {
         snapshot.forEach(doc => state.results.push({ id: doc.id, ...doc.data() }));
         renderMatchLeaderboard();
         renderOverallLeaderboard();
+        renderChampionsReveal();
     });
 }
 // --- Render Functions ---
@@ -191,24 +203,37 @@ function renderSchedule() {
 function renderMatchLeaderboard() {
     const tbody = document.querySelector("#match-leaderboard-table tbody");
     const matchSelect = document.getElementById("match-select");
+    const groupSelect = document.getElementById("match-group-filter");
     if(!tbody || !matchSelect) return;
+    
     const selectedMatch = parseInt(matchSelect.value);
+    const filterGroup = groupSelect?.value || "All";
+    
     tbody.innerHTML = "";
     let matchResults = state.results.filter(r => r.matchNo === selectedMatch);
-    matchResults.sort((a, b) => b.totalPoints - a.totalPoints);
-    if (matchResults.length === 0) {
+    
+    let populatedResults = matchResults.map(r => {
+        const team = state.teams.find(t => t.id === r.teamId);
+        return { ...r, teamName: team ? team.name : "Unknown Team", group: team ? (team.group || "Group A") : "Unknown" };
+    });
+
+    if (filterGroup !== "All") {
+        populatedResults = populatedResults.filter(r => r.group === filterGroup);
+    }
+
+    populatedResults.sort((a, b) => b.totalPoints - a.totalPoints);
+    
+    if (populatedResults.length === 0) {
         tbody.innerHTML = "<tr><td colspan='6' style='text-align:center'>No results for this match yet.</td></tr>";
         return;
     }
-    matchResults.forEach((result, index) => {
-        const team = state.teams.find(t => t.id === result.teamId);
-        const teamName = team ? team.name : "Unknown Team";
+    populatedResults.forEach((result, index) => {
         let rankClass = index === 0 ? "rank-1" : index === 1 ? "rank-2" : index === 2 ? "rank-3" : "";
         let dinnerText = result.chickenDinners > 0 ? `${result.chickenDinners}x` : "-";
         tbody.innerHTML += `
             <tr>
                 <td class="${rankClass}">#${index + 1}</td>
-                <td style="font-weight:bold;">${teamName}</td>
+                <td style="font-weight:bold;">${result.teamName}</td>
                 <td style="color:var(--accent-secondary); font-weight:bold;">${dinnerText}</td>
                 <td>${result.kills}</td>
                 <td>${result.placementPoints}</td>
@@ -218,9 +243,32 @@ function renderMatchLeaderboard() {
     });
 }
 function renderOverallLeaderboard() {
+    const overallSection = document.getElementById("overall-leaderboard");
+    if (state.settings.hideOverall && state.settings.revealStatus === 0) {
+        if(overallSection) {
+            overallSection.querySelector('.table-container')?.classList.add("hidden");
+            let suspMsg = document.getElementById("suspense-msg");
+            if(!suspMsg) {
+                suspMsg = document.createElement("div");
+                suspMsg.id = "suspense-msg";
+                suspMsg.innerHTML = "<h3 style='text-align:center; color:var(--accent-primary); margin: 2rem 0; font-family:var(--font-heading);'>Calculations are ongoing. The Overall Leaderboard is currently hidden for suspense!</h3>";
+                overallSection.querySelector('.container').appendChild(suspMsg);
+            }
+            suspMsg.classList.remove("hidden");
+        }
+    } else {
+        if(overallSection) {
+            overallSection.querySelector('.table-container')?.classList.remove("hidden");
+            document.getElementById("suspense-msg")?.classList.add("hidden");
+        }
+    }
+
     const tbody = document.querySelector("#overall-table tbody");
     if(!tbody) return;
     tbody.innerHTML = "";
+    
+    const filterGroup = document.getElementById("overall-group-filter")?.value || "All";
+    
     let overallData = state.teams.map(team => {
         let teamResults = state.results.filter(r => r.teamId === team.id);
         let matchesPlayed = teamResults.length;
@@ -228,9 +276,16 @@ function renderOverallLeaderboard() {
         let totalPlacement = teamResults.reduce((sum, current) => sum + current.placementPoints, 0);
         let totalDinners = teamResults.reduce((sum, current) => sum + (current.chickenDinners || 0), 0);
         let grandTotal = totalKills + totalPlacement;
-        return { teamName: team.name, matchesPlayed, totalKills, totalPlacement, totalDinners, grandTotal };
+        let group = team.group || "Group A";
+        return { teamName: team.name, group, matchesPlayed, totalKills, totalPlacement, totalDinners, grandTotal };
     });
+    
+    if(filterGroup !== "All") {
+        overallData = overallData.filter(d => d.group === filterGroup);
+    }
+    
     overallData.sort((a, b) => b.grandTotal - a.grandTotal);
+    
     if (overallData.length === 0) {
         tbody.innerHTML = "<tr><td colspan='7' style='text-align:center'>No data available.</td></tr>";
         return;
@@ -253,6 +308,8 @@ function renderOverallLeaderboard() {
     });
 }
 document.getElementById("match-select")?.addEventListener("change", renderMatchLeaderboard);
+document.getElementById("match-group-filter")?.addEventListener("change", renderMatchLeaderboard);
+document.getElementById("overall-group-filter")?.addEventListener("change", renderOverallLeaderboard);
 // --- Admin Forms ---
 // 1. Add Team
 document.getElementById("form-team")?.addEventListener("submit", async(e) => {
@@ -375,8 +432,8 @@ setTimeout(() => {
     if(!db || state.teams.length === 0) {
         if(state.teams.length === 0) {
             state.teams = [
-                {id: "t1", name: "Team Soul", group: "Group A", p1Name: "Mortal", p1Ign: "SOULmortal", p2Name: "Viper", p2Ign: "SOULviper", p3Name: "Regaltos", p3Ign: "SOULregaltos", p4Name: "Ronak", p4Ign: "SOULronak"},
-                {id: "t2", name: "GodLike Esports", group: "Group B", p1Name: "Jonathan", p1Ign: "TSMentJONATHAN", p2Name: "Neyoo", p2Ign: "TSMentNEYOO", p3Name: "ClutchGod", p3Ign: "TSMentCLUTCH", p4Name: "ZGod", p4Ign: "TSMentZGOD"},
+                {id: "t1", name: "Team Soul", group: "Finals", p1Name: "Mortal", p1Ign: "SOULmortal", p2Name: "Viper", p2Ign: "SOULviper", p3Name: "Regaltos", p3Ign: "SOULregaltos", p4Name: "Ronak", p4Ign: "SOULronak"},
+                {id: "t2", name: "GodLike Esports", group: "Finals", p1Name: "Jonathan", p1Ign: "TSMentJONATHAN", p2Name: "Neyoo", p2Ign: "TSMentNEYOO", p3Name: "ClutchGod", p3Ign: "TSMentCLUTCH", p4Name: "ZGod", p4Ign: "TSMentZGOD"},
                 {id: "t3", name: "Team XSpark", group: "Finals", p1Name: "Scout", p1Ign: "TXscout", p2Name: "Mavi", p2Ign: "TXmavi", p3Name: "Daljit", p3Ign: "TXdaljit", p4Name: "Gill", p4Ign: "TXgill"}
             ];
             state.schedule = [
@@ -408,6 +465,12 @@ async function downloadElementAsImage(elementId, format) {
     // Add downloading class to style the element for image export
     element.classList.add('is-downloading');
     
+    // Temporarily allow document to expand horizontally to capture full table on mobile
+    const originalBodyOverflow = document.body.style.overflow || '';
+    const originalDocOverflow = document.documentElement.style.overflow || '';
+    document.body.style.overflow = 'visible';
+    document.documentElement.style.overflow = 'visible';
+    
     // Short delay to ensure browser applies CSS changes
     await new Promise(resolve => setTimeout(resolve, 150));
     
@@ -418,11 +481,17 @@ async function downloadElementAsImage(elementId, format) {
             scale: 2, 
             useCORS: true,
             backgroundColor: bgColor,
-            logging: false
+            logging: false,
+            // Capture full scrollable dimension ensuring no cutoff
+            windowWidth: document.documentElement.scrollWidth,
+            windowHeight: document.documentElement.scrollHeight
         });
         
         const link = document.createElement('a');
-        let title = elementId.includes('match') ? 'Match_Results' : 'Overall_Leaderboard';
+        let title = elementId.includes('match') ? 'Match_Results' : 
+                    elementId.includes('team') ? 'Participating_Teams' : 
+                    elementId.includes('scoring') ? 'Scoring_System' : 
+                    'Overall_Leaderboard';
         link.download = `${title}_${new Date().getTime()}.${format}`;
         
         const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
@@ -436,18 +505,32 @@ async function downloadElementAsImage(elementId, format) {
         alert("Could not generate image. Check console for details.");
     } finally {
         // Revert styling
+        document.body.style.overflow = originalBodyOverflow;
+        document.documentElement.style.overflow = originalDocOverflow;
         element.classList.remove('is-downloading');
     }
 }
 
+document.getElementById('dl-scoring-btn')?.addEventListener('click', () => {
+    downloadElementAsImage('scoring-export-area', 'png');
+});
+
 document.getElementById('dl-match-btn')?.addEventListener('click', () => {
     const matchNo = document.getElementById('match-select').value;
+    const groupFilter = document.getElementById('match-group-filter').value;
     const titleEl = document.getElementById('match-export-title');
-    if (titleEl) titleEl.innerText = `Match ${matchNo} Result`;
+    if (titleEl) {
+        titleEl.innerText = groupFilter === 'All' ? `Match ${matchNo} Result` : `Match ${matchNo} Result - ${groupFilter}`;
+    }
     downloadElementAsImage('match-export-area', 'png');
 });
 
 document.getElementById('dl-overall-btn')?.addEventListener('click', () => {
+    const groupFilter = document.getElementById('overall-group-filter').value;
+    const titleEl = document.getElementById('overall-export-title');
+    if (titleEl) {
+        titleEl.innerText = groupFilter === 'All' ? 'Overall Ranking' : `Overall Ranking - ${groupFilter}`;
+    }
     downloadElementAsImage('overall-export-area', 'png');
 });
 
@@ -459,3 +542,114 @@ document.getElementById('dl-team-btn')?.addEventListener('click', () => {
     }
     downloadElementAsImage('teams-export-area', 'png');
 });
+
+// --- Champions Reveal Logic ---
+function renderChampionsReveal() {
+    const rs = state.settings.revealStatus; // 0=None, 1=RunnerUp, 2=Champions
+    
+    const btnOverall = document.getElementById("btn-toggle-overall");
+    if(btnOverall) {
+        btnOverall.innerText = state.settings.hideOverall ? "Show Overall Leaderboard" : "Hide Overall Leaderboard";
+        btnOverall.style.background = state.settings.hideOverall ? "#ff5252" : "";
+    }
+
+    const sectionsToHide = ['scoring', 'schedule', 'match-leaderboard', 'teams', 'maps']; // Overall Leaderboard is kept for bottom
+    
+    let finalsTeams = state.teams.filter(t => t.group === "Finals");
+    let teamsToConsider = finalsTeams.length > 0 ? finalsTeams : state.teams;
+    
+    let overallData = teamsToConsider.map(team => {
+        let teamResults = state.results.filter(r => r.teamId === team.id);
+        let totalKills = teamResults.reduce((sum, current) => sum + current.kills, 0);
+        let totalPlacement = teamResults.reduce((sum, current) => sum + current.placementPoints, 0);
+        return { team, grandTotal: totalKills + totalPlacement };
+    });
+    overallData.sort((a, b) => b.grandTotal - a.grandTotal);
+    
+    const champObj = overallData.length > 0 ? overallData[0] : null;
+    const runnerObj = overallData.length > 1 ? overallData[1] : null;
+
+    const champCard = document.getElementById("card-champion");
+    const runnerCard = document.getElementById("card-runnerup");
+
+    if (rs > 0) {
+        document.getElementById("champions")?.classList.remove("hidden");
+        sectionsToHide.forEach(id => document.getElementById(id)?.classList.add("hidden"));
+        
+        const overallFilter = document.getElementById("overall-group-filter");
+        if(overallFilter && overallFilter.value !== "Finals") {
+            overallFilter.value = "Finals";
+            renderOverallLeaderboard();
+        }
+        
+        // Setup Runner Up Display
+        if(rs >= 1 && runnerObj && runnerObj.grandTotal > 0) {
+            runnerCard.classList.remove("hidden");
+            let c = runnerObj.team;
+            runnerCard.innerHTML = `
+                <div style="font-size: 3rem; line-height:1; margin-bottom: 0.5rem;">🥈</div>
+                <h2 style="font-size: clamp(2rem, 4vw, 3rem); margin: 0; color: #fff; text-shadow: 0 0 15px var(--silver); letter-spacing: 1px;">${c.name}</h2>
+                <p style="color:var(--text-muted); font-size:1.1rem; margin-top:1rem; font-weight:bold;">${c.p1Ign} &nbsp;•&nbsp; ${c.p2Ign} &nbsp;•&nbsp; ${c.p3Ign} &nbsp;•&nbsp; ${c.p4Ign}</p>
+                <div style="display:inline-block; margin-top:1rem; padding: 0.3rem 1.5rem; background:rgba(192,192,192,0.2); border-radius:50px; border:1px solid var(--silver);">
+                    <span style="font-size: 1.2rem; color: var(--silver); font-weight: bold;">${runnerObj.grandTotal} POINTS (RUNNER-UP)</span>
+                </div>
+            `;
+        } else {
+            runnerCard.classList.add("hidden");
+        }
+
+        // Setup Champion Display
+        if(rs >= 2 && champObj && champObj.grandTotal > 0) {
+            champCard.classList.remove("hidden");
+            let c = champObj.team;
+            champCard.innerHTML = `
+                <div style="font-size: 5rem; line-height:1; margin-bottom: 1rem; animation: pulse 2s infinite;">🏆</div>
+                <h1 style="font-size: clamp(3rem, 6vw, 5rem); margin: 0; color: #fff; text-shadow: 0 0 30px var(--gold); letter-spacing: 2px;">${c.name}</h1>
+                <p style="color:var(--text-muted); font-size:1.3rem; margin-top:1.5rem; letter-spacing:1px; font-weight:bold;">${c.p1Ign} &nbsp;•&nbsp; ${c.p2Ign} &nbsp;•&nbsp; ${c.p3Ign} &nbsp;•&nbsp; ${c.p4Ign}</p>
+                <div style="display:inline-block; margin-top:2rem; padding: 0.5rem 2rem; background:rgba(255,215,0,0.2); border-radius:50px; border:1px solid var(--gold);">
+                    <span style="font-size: 1.5rem; color: var(--gold); font-weight: bold;">${champObj.grandTotal} POINT VICTORY (CHAMPION)</span>
+                </div>
+            `;
+            renderConfetti(true); // Golden confetti
+        } else {
+            champCard.classList.add("hidden");
+            if (rs === 1) renderConfetti(false); // Silver confetti
+        }
+    } else {
+        document.getElementById("champions")?.classList.add("hidden");
+        sectionsToHide.forEach(id => document.getElementById(id)?.classList.remove("hidden"));
+        document.getElementById("confetti-container").innerHTML = "";
+    }
+}
+
+function renderConfetti(isGold) {
+    const container = document.getElementById("confetti-container");
+    if(!container) return;
+    container.innerHTML = "";
+    for(let i=0; i<70; i++) {
+        const conf = document.createElement("div");
+        conf.classList.add("confetti-piece");
+        conf.style.left = Math.random() * 100 + "%";
+        conf.style.animationDelay = Math.random() * 4 + "s";
+        let color1 = isGold ? "var(--gold)" : "var(--silver)";
+        let color2 = isGold ? "var(--accent-primary)" : "#fff";
+        conf.style.backgroundColor = Math.random() > 0.5 ? color1 : color2;
+        container.appendChild(conf);
+    }
+}
+
+document.getElementById('btn-toggle-overall')?.addEventListener('click', () => { state.settings.hideOverall = !state.settings.hideOverall; syncSettings("Overall Leaderboard " + (state.settings.hideOverall ? "Hidden" : "Visible")); });
+document.getElementById('btn-reveal-runnerup')?.addEventListener('click', () => { state.settings.revealStatus = 1; syncSettings("Runner Up Revealed!"); });
+document.getElementById('btn-reveal-champion')?.addEventListener('click', () => { state.settings.revealStatus = 2; syncSettings("Champions Revealed!"); });
+document.getElementById('btn-reset-reveal')?.addEventListener('click', () => { state.settings.revealStatus = 0; syncSettings("Reveals Reset."); });
+
+async function syncSettings(msg) {
+    if(db) {
+        try { await setDoc(doc(db, "settings", "tournament"), state.settings, { merge: true }); } 
+        catch(e) { console.error(e); }
+    } else {
+        renderChampionsReveal();
+        renderOverallLeaderboard();
+        alert(msg + " (Mock Mode)");
+    }
+}
